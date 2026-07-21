@@ -517,13 +517,13 @@ const FINALE = {
 <script>
 /* ================= GAME ENGINE ================= */
 const VID = {
-  title:"assets/mountain-expedition.mp4",
-  w1:"https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_095850_ddd90878-73ee-448c-aa28-c7076dd0938c.mp4",
-  w2:"https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_095859_7f1834f0-f4c9-4048-891e-6bf885fc2cc7.mp4",
-  w3:"https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_095909_e58668b0-d4dd-435e-92ad-ddc56888722e.mp4"
+  title:"assets/w1.mp4",
+  w1:"assets/w1.mp4",
+  w2:"assets/w2.mp4",
+  w3:"assets/w3.mp4"
 };
-VID.w4 = "https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_170318_24aec417-c9e9-40cb-ba81-0da906c3c6f6.mp4"; // the forge
-VID.finale = "https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_170327_6b5fd758-9741-47bd-a056-666a86520222.mp4"; // the storm beacon
+VID.w4 = "assets/w4.mp4"; // the forge
+VID.finale = "assets/finale.mp4"; // the storm beacon
 const RESULTS_WHATSAPP = "96181204870"; // facilitator number (change here if needed), country code + digits only
 const cine = src => src ? `<video class="cine-video" poster="assets/mountain-expedition-poster.jpg" autoplay muted loop playsinline preload="auto" disablepictureinpicture aria-label="Drone circling a mountain peak" oncanplay="this.play().catch(()=>{})" onclick="this.play().catch(()=>{})"><source src="${src}" type="video/mp4"></video>` : "";
 
@@ -1134,7 +1134,7 @@ function init3D(){
     img.onerror=()=>{}; /* photo unavailable: procedural sky remains */
     img.src=url;
   }
-  const USE_PHOTO_SKY=false;
+  const USE_PHOTO_SKY=true;
   if(USE_PHOTO_SKY)(function(){
     const cdn="https://d8j0ntlcm91z4.cloudfront.net/user_3G2X5KEM9Xjuabv0NTitUm2iWkp/hf_20260709_170511_00c4c0d0-36ef-4476-9f33-068754428be4.png";
     const probe=new Image();
@@ -2250,7 +2250,7 @@ flyTo=function(i,cb){ sfx.fly(); _ft(i,cb); };
 /* ============ PWA SERVICE WORKER ============ */
 if ("serviceWorker" in navigator) {
   addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=7.2.2",{updateViaCache:"none"})
+    navigator.serviceWorker.register("sw.js?v=7.3.0",{updateViaCache:"none"})
       .then(reg=>reg.update()).catch(e => console.warn("SW registration failed:", e));
   });
 }

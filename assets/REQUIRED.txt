@@ -1,19 +1,11 @@
-Local assets for the 3D expedition map:
+Bundled local assets (present):
 
-  froggy_island.glb     — PRESENT. Froggy Island by riverchick (Sketchfab), CC BY 4.0.
-                          Centring/scale should be baked (identity node transforms).
+  froggy_island.glb
+  tent.glb, cabin.glb, tower.glb, workshop.glb, lighthouse.glb
+  fir_sapling/fir_sapling_optimized.glb, boulder.glb, trees.glb, rocks.glb
+  Textures/colormap.png, Textures/colormap-castle.png
+  mountain-expedition-poster.jpg, w1–w4.mp4, finale.mp4
+  w1.mp4 w2.mp4 w3.mp4 w4.mp4 finale.mp4
+  sky.png
 
-Still needed for full cinematics:
-  mountain-expedition-poster.jpg
-  mountain-expedition.mp4   (and any other cinematic videos referenced in index.html)
-
-Optional upgrades (procedural fallbacks are used if missing):
-  fir_sapling/fir_sapling_optimized.glb
-  boulder.glb
-  tent.glb, cabin.glb, tower.glb, workshop.glb
-  Note: the old CloudFront camp/rock URLs currently 403 — ship local files to upgrade.
-
-Do not re-add:
-  gemini-material-reference.png
-  rock_face_03/
-  mountainside/
+See CREDITS.txt for licenses.

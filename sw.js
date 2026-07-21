@@ -1,5 +1,5 @@
 /* ToT Learning Expedition — minimal service worker (cache shell only). */
-const CACHE = "tot-shell-v7.2.2";
+const CACHE = "tot-shell-v7.3.0";
 const PRECACHE = ["./", "index.html", "login.html", "admin.html"];
 
 self.addEventListener("install", (event) => {
