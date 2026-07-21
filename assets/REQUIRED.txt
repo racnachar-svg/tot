@@ -7,10 +7,11 @@ Still needed for full cinematics:
   mountain-expedition-poster.jpg
   mountain-expedition.mp4   (and any other cinematic videos referenced in index.html)
 
-Optional (CDN fallbacks exist for camps/trees/rocks):
-  tent.glb, cabin.glb, tower.glb, workshop.glb
+Optional upgrades (procedural fallbacks are used if missing):
   fir_sapling/fir_sapling_optimized.glb
   boulder.glb
+  tent.glb, cabin.glb, tower.glb, workshop.glb
+  Note: the old CloudFront camp/rock URLs currently 403 — ship local files to upgrade.
 
 Do not re-add:
   gemini-material-reference.png

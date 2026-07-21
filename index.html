@@ -1078,7 +1078,10 @@ function init3D(){
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   scene=new THREE.Scene();
-  scene.fog=new THREE.Fog(0x91A8AD,175,520);
+  /* Soft sea-horizon fill so the ocean rim still reads when the Sky shader is
+     weak (software WebGL) or the HDR env map is unavailable. */
+  scene.background=new THREE.Color(0x9BB4BC);
+  scene.fog=new THREE.Fog(0x8FA8B0,90,420);
   camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,600);
   softTex=glowTexture();
 
@@ -1213,9 +1216,9 @@ function init3D(){
   }
   foamRef=new THREE.Group();
   /* Rim ~46; pull foam slightly inboard so it hugs the irregular shoreline. */
-  [[41.2,42.1,.58],[42.6,43.4,.16]].forEach(([a,b,o],i)=>{
+  [[40.6,41.8,.72],[42.0,43.2,.30]].forEach(([a,b,o],i)=>{
     const foam=new THREE.Mesh(coastRing(a,b,MOBILE?140:280,1.7+i*2.3),surfMaterial(i?0xC7E6E0:0xF4FCFA,o,1.08+i*.18,i*3.1));
-    foam.rotation.x=-Math.PI/2;foam.position.y=-.45+i*.018;foam.userData={base:o,phase:i*1.9};foamRef.add(foam);
+    foam.rotation.x=-Math.PI/2;foam.position.y=-.18+i*.02;foam.userData={base:o,phase:i*1.9};foamRef.add(foam);
   });
   scene.add(foamRef);
 
@@ -1281,6 +1284,10 @@ function init3D(){
         });
       });
       scene.add(isl);
+      /* Sea atmosphere after the GLB arrives — ccEnhance may have run earlier
+         while __islandMeshes was still empty and painted a dark inland fog. */
+      scene.fog=new THREE.Fog(0x8FA8B0,90,420);
+      scene.background=new THREE.Color(0x9BB4BC);
       console.log("[3D] Froggy Island loaded —",window.__islandMeshes.length,"meshes");
       if(typeof window.__settleOnIsland==="function") window.__settleOnIsland();
     },undefined,e=>console.error("[3D] ISLAND FAILED:",ISLAND.src,e));
@@ -1315,11 +1322,22 @@ function init3D(){
     r.userData.sink=.35;scene.add(r);
     __boulders.push(r);
   }
+  function mkPine(){
+    /* Local fallback so the slopes stay wooded when CDN firs 403/fail. */
+    const t=new THREE.Group();
+    const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.14,.24,2.0,6),lam(0x4A3422));
+    trunk.position.y=1.0;t.add(trunk);
+    for(let k=0;k<3;k++){
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(1.25-k*.28,1.7,7),lam(k%2?0x1F5A3A:0x2E6B45));
+      cone.position.y=1.8+k*1.05;t.add(cone);
+    }
+    return t;
+  }
   for(let i=0;i<(MOBILE?14:24);i++){
     const a=rnd(0,Math.PI*2),rad=rnd(14,36);
     const near=NODE_POS.some(p=>Math.hypot(p.x-Math.cos(a)*rad,p.z-Math.sin(a)*rad)<8);
     if(near)continue;
-    const t=new THREE.Group();
+    const t=mkPine();
     t.position.set(Math.cos(a)*rad,-999,Math.sin(a)*rad);t.rotation.y=rnd(0,Math.PI*2);t.scale.setScalar(rnd(.72,1.15));
     t.userData.ph=rnd(0,6);t.userData.sink=.2;prints.push(t);scene.add(t);
   }
@@ -1366,6 +1384,7 @@ function init3D(){
     }catch(e){}
   }
   buildCamps(gtex);
+  themeCampSlabs();
   if(typeof mountAllCamps==="function") mountAllCamps();
   if(typeof mountNature==="function") mountNature();
   scene.traverse(o=>{
@@ -1409,6 +1428,29 @@ function init3D(){
   const ld=document.getElementById("load3d"); if(ld) ld.remove();
 }
 
+function themeCampSlabs(){
+  /* Procedural camps (and failed CDN swaps) often ship bare white slabs.
+     Recolor untextured near-white standard materials to the foundation stone.
+     Skip MeshBasic lanterns/orbs and leave the lighthouse paint alone. */
+  campGroups.forEach((g,i)=>{
+    if(!g || i===4) return;
+    g.traverse(o=>{
+      if(!o.isMesh || !o.material) return;
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      mats.forEach(m=>{
+        if(!m || !m.color || m.map) return;
+        if(m.type==="MeshBasicMaterial") return;
+        const lum=(m.color.r+m.color.g+m.color.b)/3;
+        if(lum>0.72){
+          m.color.setHex(PAD_COLOR);
+          if("roughness" in m) m.roughness=.94;
+          if("metalness" in m) m.metalness=0;
+          m.needsUpdate=true;
+        }
+      });
+    });
+  });
+}
 function buildCamps(gtex){
   const builds=[
     ()=>{ /* base camp: two tents + fire + logs */
@@ -1740,12 +1782,29 @@ function mountScatterGLB(localName, cdnUrl, targets, baseH, replaceChildren){
   });
 }
 function mountNature(){
-  /* Restore the exact original Poly Haven fir used by the approved scene.
-     Its native optimized GLB keeps the foliage alpha and material layout intact. */
-  mountScatterGLB("fir_sapling/fir_sapling_optimized.glb",
-    "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/fir_sapling/fir_sapling_1k.gltf",
-    prints.filter(p=>!p.userData.spin),10.5,true);
-  mountScatterGLB("boulder.glb", ROCK_GLB_URL, window.__boulders||[], 1.8, false);
+  /* Procedural pines/boulders are already settled on Froggy Island. Only upgrade
+     when a local asset exists — the old CloudFront/Poly Haven CDNs 403/fail in
+     browser and would otherwise just spam the console. */
+  const tryLocal=(name,targets,h,replace)=>{
+    if(!THREE.GLTFLoader) return;
+    const L=new THREE.GLTFLoader();
+    if(THREE.DRACOLoader){const D=new THREE.DRACOLoader();D.setDecoderPath("https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/");L.setDRACOLoader(D);}
+    L.load("assets/"+name, g=>{
+      console.log("[asset] local nature OK:",name);
+      const proto=normalizeGLB(g.scene, h);
+      targets.forEach(t=>{
+        const inst=proto.clone();
+        const sc=(t.scale&&t.scale.x)||1;
+        inst.scale.multiplyScalar(sc*(0.85+Math.random()*0.3));
+        inst.rotation.y=Math.random()*Math.PI*2;
+        if(replace){ [...t.children].forEach(ch=>t.remove(ch)); t.add(inst); t.scale.setScalar(1); }
+        else{ const p=t.position.clone(); const parent=t.parent; parent.remove(t);
+              inst.position.copy(p); inst.position.y=Math.max(0,p.y-h*0.15); parent.add(inst); }
+      });
+    }, undefined, ()=>console.log("[asset] keep procedural nature (no local",name+")"));
+  };
+  tryLocal("fir_sapling/fir_sapling_optimized.glb", prints.filter(p=>!p.userData.spin), 10.5, true);
+  tryLocal("boulder.glb", window.__boulders||[], 1.8, false);
 }
 let TREE_GLB_URL="https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/330a9a54-eee3-4720-ad5e-f68eb1706958.glb",
     ROCK_GLB_URL="https://d3u0tzju9qaucj.cloudfront.net/7d051b5a-7bfe-49fe-a484-24e7b3a9458a/b941f943-df55-4538-bc94-02648c17b33d.glb";
@@ -1798,6 +1857,7 @@ function mountCampGLB(i, localName, url, targetH){
       });
       g.add(m);
       if(g.userData.bp) g.userData.bp.position.y = targetH + 1.3; /* blueprints ride the new tower */
+      themeCampSlabs();
     });
   }catch(e){}
 }
@@ -2190,7 +2250,7 @@ flyTo=function(i,cb){ sfx.fly(); _ft(i,cb); };
 /* ============ PWA SERVICE WORKER ============ */
 if ("serviceWorker" in navigator) {
   addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=7.2.1",{updateViaCache:"none"})
+    navigator.serviceWorker.register("sw.js?v=7.2.2",{updateViaCache:"none"})
       .then(reg=>reg.update()).catch(e => console.warn("SW registration failed:", e));
   });
 }
@@ -2406,12 +2466,22 @@ window.__cardCourse = function(i){
 
 <script id="ccEnhance">
 (function(){var T=window.THREE;var tries=0;var iv=setInterval(function(){tries++;var cap=window.__cap;
-if((!cap||!cap.renderer||!cap.scene)&&tries<250)return; clearInterval(iv); if(!cap||!cap.renderer||!cap.scene)return;
+if((!cap||!cap.renderer||!cap.scene)&&tries<250)return;
+/* Prefer waiting for Froggy meshes so fog/background match the ocean map. */
+if(!(window.__islandMeshes&&window.__islandMeshes.length)&&tries<80)return;
+clearInterval(iv); if(!cap||!cap.renderer||!cap.scene)return;
 try{apply(cap);}catch(e){if(window.console)console.warn("enh",e);}},120);
 function apply(cap){var r=cap.renderer,sc=cap.scene,cam=cap.camera;
 try{r.shadowMap.enabled=true; if(T.PCFSoftShadowMap!==undefined)r.shadowMap.type=T.PCFSoftShadowMap;
 (cap.dirLights||[]).forEach(function(l){try{if(l.castShadow&&l.shadow){l.shadow.mapSize.width=2048;l.shadow.mapSize.height=2048;l.shadow.bias=-0.0004;l.shadow.normalBias=0.02;if(l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}}}catch(e){}});}catch(e){}
-try{var far=(cam&&cam.far&&isFinite(cam.far))?cam.far:2000; sc.fog=new T.Fog(0x223140,far*0.22,far*0.96);}catch(e){}
+try{
+  if(window.__islandMeshes && window.__islandMeshes.length){
+    sc.fog=new T.Fog(0x8FA8B0,90,420);
+    if(!sc.background) sc.background=new T.Color(0x9BB4BC);
+  }else{
+    var far=(cam&&cam.far&&isFinite(cam.far))?cam.far:2000; sc.fog=new T.Fog(0x223140,far*0.22,far*0.96);
+  }
+}catch(e){}
 try{if(T.HemisphereLight){var h=new T.HemisphereLight(0x9fc2e0,0x223038,0.28);sc.add(h);}}catch(e){}
 try{if(cap.water&&cap.water.material&&cap.water.material.uniforms){var u=cap.water.material.uniforms;if(u.distortionScale)u.distortionScale.value=Math.max(u.distortionScale.value||0,4.5);if(u.size)u.size.value=(u.size.value||1)*1.1;}}catch(e){}
 try{if(cap.bloom){if(cap.bloom.strength!=null)cap.bloom.strength*=1.22;if(cap.bloom.radius!=null)cap.bloom.radius=Math.min((cap.bloom.radius||0)+0.08,1);}}catch(e){}
