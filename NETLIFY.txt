@@ -1,0 +1,22 @@
+# Deploy to Netlify
+
+## Quick upload
+1. Download `tot-netlify.zip`
+2. Unzip it
+3. Go to https://app.netlify.com/drop
+4. Drag the unzipped folder onto the page
+5. Open the URL Netlify gives you
+6. Sign in with any trainee name (static mode — no backend)
+
+## Or connect GitHub
+1. Merge the PR into `main`
+2. Netlify → Add new site → Import from Git → this repo
+3. Build command: leave empty (or the echo in netlify.toml)
+4. Publish directory: `.` (site root)
+5. Deploy
+
+## Local test before upload
+```bash
+python3 preview_server.py
+# open http://127.0.0.1:8080/
+```

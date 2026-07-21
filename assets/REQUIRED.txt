@@ -1,0 +1,11 @@
+Bundled local assets (present):
+
+  froggy_island.glb
+  tent.glb, cabin.glb, tower.glb, workshop.glb, lighthouse.glb
+  fir_sapling/fir_sapling_optimized.glb, boulder.glb, trees.glb, rocks.glb
+  Textures/colormap.png, Textures/colormap-castle.png
+  mountain-expedition-poster.jpg, w1–w4.mp4, finale.mp4
+  w1.mp4 w2.mp4 w3.mp4 w4.mp4 finale.mp4
+  sky.png
+
+See CREDITS.txt for licenses.

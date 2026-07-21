@@ -1,0 +1,13 @@
+Third-party assets bundled in this folder
+
+Froggy Island — riverchick (Sketchfab), CC BY 4.0
+  https://sketchfab.com/riverchick
+
+Camp & nature models — Kenney.nl (CC0 1.0)
+  Survival Kit: tent, cabin/structure, tower/metal structure, workshop/workbench, trees, rocks
+  Castle Kit: lighthouse stand-in (tower-square)
+  https://kenney.nl/assets/survival-kit
+  https://kenney.nl/assets/castle-kit
+
+Cinematics (mountain-expedition / w1–w4 / finale) and sky panorama
+  Project expedition media mirrored from the existing CloudFront URLs in index.html

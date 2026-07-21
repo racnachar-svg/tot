@@ -80,7 +80,7 @@ button{font-family:inherit;cursor:pointer;border:none}
     <input type="password" id="password" name="password" autocomplete="current-password" required>
     <button class="btn" id="submitBtn" type="submit">Sign in</button>
   </form>
-  <p class="hint">No account? Ask your facilitator to create one for you.</p>
+  <p class="hint">No account? Ask your facilitator to create one for you.<br>On Netlify, enter any trainee name and sign in.</p>
 </div>
 <script>
 const form = document.getElementById("loginForm");
@@ -93,24 +93,42 @@ form.addEventListener("submit", async (e) => {
   btn.disabled = true;
   btn.textContent = "Signing in…";
 
+  const username = (document.getElementById("username").value || "").trim();
+  const password = document.getElementById("password").value;
   try {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({
-        username: document.getElementById("username").value,
-        password: document.getElementById("password").value,
-      }),
+      body: JSON.stringify({ username, password }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Sign in failed.");
-    window.location.href = "/";
+    window.location.href = "/index.html";
   } catch (ex) {
-    err.textContent = ex.message || "Sign in failed.";
-    err.classList.add("show");
-    btn.disabled = false;
-    btn.textContent = "Sign in";
+    /* Static deploy (Netlify): no /api — accept any name as a local guest. */
+    if (!username) {
+      err.textContent = "Enter a trainee name to continue.";
+      err.classList.add("show");
+      btn.disabled = false;
+      btn.textContent = "Sign in";
+      return;
+    }
+    try {
+      sessionStorage.setItem("tot_auth", JSON.stringify({
+        username,
+        name: username,
+        displayName: username,
+        role: "trainee"
+      }));
+      window.location.href = "/index.html";
+      return;
+    } catch (e2) {
+      err.textContent = ex.message || "Sign in failed.";
+      err.classList.add("show");
+      btn.disabled = false;
+      btn.textContent = "Sign in";
+    }
   }
 });
 </script>
