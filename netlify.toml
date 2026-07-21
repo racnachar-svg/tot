@@ -1,0 +1,28 @@
+# Netlify static publish
+[build]
+  publish = "."
+  command = "echo 'Static site — no build step'"
+
+# Correct MIME for 3D models
+[[headers]]
+  for = "/*.glb"
+  [headers.values]
+    Content-Type = "model/gltf-binary"
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/*.mp4"
+  [headers.values]
+    Content-Type = "video/mp4"
+    Cache-Control = "public, max-age=604800"
+
+# Pretty entry
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200

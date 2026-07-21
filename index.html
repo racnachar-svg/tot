@@ -953,6 +953,7 @@ function buildLogoutBtn(){
   b.title="Log out";
   b.onclick=async ()=>{
     try{ await fetch("/api/logout",{method:"POST",credentials:"same-origin"}); }catch(e){}
+    try{ sessionStorage.removeItem("tot_auth"); }catch(e){}
     location.href="/login.html";
   };
   document.body.appendChild(b);
@@ -965,14 +966,21 @@ function buildAdminBtn(){
   document.body.appendChild(b);
 }
 async function checkAuth(){
+  /* Prefer real API when present; on static hosts (Netlify) fall back to a
+     sessionStorage guest created by login.html. */
   try{
     const r = await fetch("/api/me",{credentials:"same-origin"});
-    if(!r.ok) throw new Error("unauthorized");
-    AUTH_USER = await r.json();
-  }catch(e){
-    location.href="/login.html";
-    throw e;
-  }
+    if(r.ok){
+      AUTH_USER = await r.json();
+      return;
+    }
+  }catch(e){}
+  try{
+    const raw = sessionStorage.getItem("tot_auth");
+    if(raw){ AUTH_USER = JSON.parse(raw); return; }
+  }catch(e){}
+  location.href="/login.html";
+  throw new Error("unauthorized");
 }
 (async function boot(){
   await checkAuth();
@@ -2250,7 +2258,7 @@ flyTo=function(i,cb){ sfx.fly(); _ft(i,cb); };
 /* ============ PWA SERVICE WORKER ============ */
 if ("serviceWorker" in navigator) {
   addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js?v=7.3.0",{updateViaCache:"none"})
+    navigator.serviceWorker.register("sw.js?v=7.3.1",{updateViaCache:"none"})
       .then(reg=>reg.update()).catch(e => console.warn("SW registration failed:", e));
   });
 }
